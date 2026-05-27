@@ -1,78 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>VoxForge</title>
+<meta charset="UTF-8">
+<title>VoxForge AI - MAX QUALITY</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+    padding: 30px;
+}
+
+textarea {
+    width: 80%;
+    height: 120px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.card {
+    background: #1e293b;
+    padding: 20px;
+    margin: 20px auto;
+    width: 80%;
+    border-radius: 10px;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Voice Cloning</h2>
+<h1>🎤 VoxForge MAX QUALITY</h1>
 
-<textarea id="text" placeholder="Écris ton texte"></textarea>
+<div class="card">
+
+<textarea id="text" placeholder="Write text here..."></textarea>
+
+<br><br>
+
+<select id="lang">
+    <option value="en">English</option>
+    <option value="fr">French</option>
+</select>
+
 <br><br>
 
 <input type="file" id="audioFile" accept="audio/*">
+
 <br><br>
 
-<p>Preview :</p>
 <audio id="preview" controls></audio>
 
 <br><br>
 
-<button onclick="generate()">Générer la voix</button>
+<button onclick="generate()">🚀 GENERATE VOICE</button>
 
-<h3>Résultat :</h3>
+<p id="status"></p>
+
+</div>
+
+<div class="card">
+<h3>Result</h3>
 <audio id="result" controls></audio>
+<br><br>
+<a id="download"><button>⬇ Download</button></a>
+</div>
 
 <script>
+
 let file = null;
 
-// preview audio
 document.getElementById("audioFile").addEventListener("change", (e) => {
     file = e.target.files[0];
     document.getElementById("preview").src = URL.createObjectURL(file);
 });
 
-// generate
-async function generate() {
+function setStatus(t){
+    document.getElementById("status").innerText = t;
+}
 
-    if (!file) {
-        alert("Upload audio");
+async function generate(){
+
+    if(!file){
+        alert("Upload voice first");
         return;
     }
 
     const text = document.getElementById("text").value;
+    const lang = document.getElementById("lang").value;
 
-    if (!text) {
-        alert("Écris un texte");
-        return;
-    }
+    setStatus("⏳ Generating high quality voice...");
 
-    const formData = new FormData();
-    formData.append("text", text);
-    formData.append("speaker_wav", file);
+    let form = new FormData();
+    form.append("text", text);
+    form.append("speaker_wav", file);
+    form.append("language", lang);
 
-    try {
-        const res = await fetch("http://127.0.0.1:8000/clone", {
-            method: "POST",
-            body: formData
-        });
+    const res = await fetch("/clone", {
+        method: "POST",
+        body: form
+    });
 
-        const data = await res.json();
+    const data = await res.json();
 
-        console.log(data);
+    setStatus("✅ Done");
 
-        if (data.audio_url) {
-            document.getElementById("result").src = data.audio_url;
-        } else {
-            alert("Erreur génération audio");
-        }
-
-    } catch (err) {
-        alert("Serveur non connecté");
-        console.error(err);
-    }
+    document.getElementById("result").src = data.audio_url;
+    document.getElementById("download").href = data.audio_url;
 }
+
 </script>
 
 </body>
