@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>VoxForge</title>
 </head>
 <body>
 
-<h1>VoxForge Voice Clone</h1>
+<h2>Voice Cloning</h2>
 
 <textarea id="text" placeholder="Écris ton texte"></textarea>
-
 <br><br>
 
 <input type="file" id="audioFile" accept="audio/*">
-
 <br><br>
 
 <p>Preview :</p>
@@ -20,7 +19,7 @@
 
 <br><br>
 
-<button onclick="generate()">Générer</button>
+<button onclick="generate()">Générer la voix</button>
 
 <h3>Résultat :</h3>
 <audio id="result" controls></audio>
@@ -28,12 +27,15 @@
 <script>
 let file = null;
 
+// preview audio
 document.getElementById("audioFile").addEventListener("change", (e) => {
     file = e.target.files[0];
     document.getElementById("preview").src = URL.createObjectURL(file);
 });
 
+// generate
 async function generate() {
+
     if (!file) {
         alert("Upload audio");
         return;
@@ -41,18 +43,35 @@ async function generate() {
 
     const text = document.getElementById("text").value;
 
-    let formData = new FormData();
+    if (!text) {
+        alert("Écris un texte");
+        return;
+    }
+
+    const formData = new FormData();
     formData.append("text", text);
     formData.append("speaker_wav", file);
 
-    const res = await fetch("http://127.0.0.1:8000/clone", {
-        method: "POST",
-        body: formData
-    });
+    try {
+        const res = await fetch("http://127.0.0.1:8000/clone", {
+            method: "POST",
+            body: formData
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    document.getElementById("result").src = data.audio_url;
+        console.log(data);
+
+        if (data.audio_url) {
+            document.getElementById("result").src = data.audio_url;
+        } else {
+            alert("Erreur génération audio");
+        }
+
+    } catch (err) {
+        alert("Serveur non connecté");
+        console.error(err);
+    }
 }
 </script>
 
