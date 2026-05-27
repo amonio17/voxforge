@@ -1,62 +1,58 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>VoxForge</title>
-
-<style>
-body {
-    background: #0f172a;
-    color: white;
-    font-family: Arial;
-    text-align: center;
-    padding: 40px;
-}
-input, textarea, button {
-    margin: 10px;
-    padding: 10px;
-    border-radius: 8px;
-}
-button {
-    background: orange;
-    cursor: pointer;
-}
-audio {
-    margin-top: 20px;
-}
-</style>
+    <title>VoxForge</title>
 </head>
-
 <body>
 
-<h1>🎤 VoxForge</h1>
+<h1>VoxForge Voice Clone</h1>
 
-<input type="file" id="audioFile"><br>
-<textarea id="textInput" placeholder="Texte..." rows="4" cols="50"></textarea><br>
+<textarea id="text" placeholder="Écris ton texte"></textarea>
 
-<button onclick="send()">Générer</button>
+<br><br>
 
-<br>
-<audio id="player" controls></audio>
+<input type="file" id="audioFile" accept="audio/*">
+
+<br><br>
+
+<p>Preview :</p>
+<audio id="preview" controls></audio>
+
+<br><br>
+
+<button onclick="generate()">Générer</button>
+
+<h3>Résultat :</h3>
+<audio id="result" controls></audio>
 
 <script>
-async function send() {
-    let file = document.getElementById("audioFile").files[0];
-    let text = document.getElementById("textInput").value;
+let file = null;
+
+document.getElementById("audioFile").addEventListener("change", (e) => {
+    file = e.target.files[0];
+    document.getElementById("preview").src = URL.createObjectURL(file);
+});
+
+async function generate() {
+    if (!file) {
+        alert("Upload audio");
+        return;
+    }
+
+    const text = document.getElementById("text").value;
 
     let formData = new FormData();
-    formData.append("file", file);
     formData.append("text", text);
+    formData.append("speaker_wav", file);
 
-    let res = await fetch("/clone", {
+    const res = await fetch("http://127.0.0.1:8000/clone", {
         method: "POST",
         body: formData
     });
 
-    let data = await res.json();
+    const data = await res.json();
 
-    document.getElementById("player").src =
-        data.file + "?t=" + Date.now();
+    document.getElementById("result").src = data.audio_url;
 }
 </script>
 

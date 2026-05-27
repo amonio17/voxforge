@@ -1,14 +1,14 @@
 from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 import shutil
+import uuid
 import os
 
 from voice_engine.tts_engine import VoiceEngine
 
 app = FastAPI()
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,24 +17,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# dossiers
-os.makedirs("voices", exist_ok=True)
-os.makedirs("output", exist_ok=True)
-
 engine = VoiceEngine()
 
+UPLOAD_DIR = "uploads"
+OUTPUT_DIR = "output"
+
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+
 @app.post("/clone")
-async def clone(file: UploadFile = File(...), text: str = Form(...)):
-    file_path = f"voices/{file.filename}"
+async def clone_voice(
+    text: str = Form(...),
+    speaker_wav: UploadFile = File(...)
+):
+    file_id = str(uuid.uuid4())
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    speaker_path = f"{UPLOAD_DIR}/{file_id}.wav"
+    output_path = f"{OUTPUT_DIR}/{file_id}.wav"
 
-    output_file = engine.generate(
-        text=text,
-        speaker_wav=file_path
-    )
+    with open(speaker_path, "wb") as buffer:
+        shutil.copyfileobj(speaker_wav.file, buffer)
 
-    return {"file": output_file}
+    engine.generate(text, speaker_path, output_path)
 
-app.mount("/", StaticFiles(directory="web", html=True), name="web")
+    return {
+        "audio_url": f"http://127.0.0.1:8000/audio/{file_id}"
+    }
+
+
+@app.get("/audio/{file_id}")
+def get_audio(file_id: str):
+    path = f"{OUTPUT_DIR}/{file_id}.wav"
+    return FileResponse(path, media_type="audio/wav")
