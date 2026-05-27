@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>VoxForge</title>
+
+<style>
+body {
+    background: #0f172a;
+    color: white;
+    font-family: Arial;
+    text-align: center;
+    padding: 40px;
+}
+input, textarea, button {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 8px;
+}
+button {
+    background: orange;
+    cursor: pointer;
+}
+audio {
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🎤 VoxForge</h1>
+
+<input type="file" id="audioFile"><br>
+<textarea id="textInput" placeholder="Texte..." rows="4" cols="50"></textarea><br>
+
+<button onclick="send()">Générer</button>
+
+<br>
+<audio id="player" controls></audio>
+
+<script>
+async function send() {
+    let file = document.getElementById("audioFile").files[0];
+    let text = document.getElementById("textInput").value;
+
+    let formData = new FormData();
+    formData.append("file", file);
+    formData.append("text", text);
+
+    let res = await fetch("/clone", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await res.json();
+
+    document.getElementById("player").src =
+        data.file + "?t=" + Date.now();
+}
+</script>
+
+</body>
+</html>
